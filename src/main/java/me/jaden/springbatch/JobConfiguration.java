@@ -10,10 +10,12 @@ import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.*;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -28,9 +30,7 @@ public class JobConfiguration {
     public Job job() {
         return jobBuilderFactory.get("job")
                 .incrementer(new RunIdIncrementer())
-                .start(step1())
-                .next(step2())
-                .next(step3())
+                .start(chunckStep())
                 .build();
     }
 
@@ -45,58 +45,21 @@ public class JobConfiguration {
     }
 
     @Bean
-    public Step step2() {
-        TaskletStep step2 = stepBuilderFactory.get("step2")
+    public Step chunckStep() {
+        return stepBuilderFactory.get("chunkStep")
                 .<String, String>chunk(3)
-                .reader(new ItemReader<String>() {
-                    @Override
-                    public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-                        return null;
-                    }
-                })
+                .reader(new ListItemReader<>(Arrays.asList("item1", "item2", "item3", "item4", "item5")))
                 .processor(new ItemProcessor<String, String>() {
                     @Override
                     public String process(String item) throws Exception {
-                        return null;
+                        return item.toUpperCase();
                     }
                 })
                 .writer(new ItemWriter<String>() {
                     @Override
                     public void write(List<? extends String> items) throws Exception {
-
+                        items.forEach(item -> System.out.println(item));
                     }
-                })
-                .build();
-        return step2;
-    }
-
-    @Bean
-    public Step step3() {
-        return stepBuilderFactory.get("step3")
-                .partitioner(step1())
-                .gridSize(2)
-                .build();
-    }
-
-    @Bean
-    public Step step4() {
-        return stepBuilderFactory.get("step4")
-                .job(job())
-                .build();
-    }
-
-    @Bean
-    public Step step5() {
-        return stepBuilderFactory.get("step5")
-                .flow(flow())
-                .build();
-    }
-
-    @Bean
-    public Flow flow() {
-        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow");
-        flowBuilder.start(step2())
-                .end();
-        return flowBuilder.build();
+                }).build();
     }
 }
