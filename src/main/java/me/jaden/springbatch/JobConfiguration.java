@@ -1,17 +1,15 @@
 package me.jaden.springbatch;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import static org.springframework.batch.core.ExitStatus.*;
 
 
 @RequiredArgsConstructor
@@ -24,12 +22,27 @@ public class JobConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("flowJob")
-                .start(step1())
-                .on(COMPLETED.getExitCode()).to(step3())
-                .from(step1())
-                .on(FAILED.getExitCode()).to(step2())
+                .start(flowA())
+                .next(step3())
+                .next(flowB())
+                .next(step6())
                 .end()
-                .incrementer(new RunIdIncrementer())
+                .build();
+    }
+
+    @Bean
+    public Flow flowA() {
+        FlowBuilder<Flow> flowFlowBuilder = new FlowBuilder<>("flowA");
+        return flowFlowBuilder.start(step1())
+                .next(step2())
+                .end();
+    }
+
+    @Bean
+    public Flow flowB() {
+        FlowBuilder<Flow> flowFlowBuilder = new FlowBuilder<>("flowB");
+        return flowFlowBuilder.start(step4())
+                .next(step5())
                 .build();
     }
 
@@ -38,8 +51,7 @@ public class JobConfiguration {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println("step 1 executed");
-                    throw new RuntimeException("step 1 failed");
-//                    return RepeatStatus.FINISHED;
+                    return RepeatStatus.FINISHED;
                 })
                 .build();
     }
@@ -59,6 +71,36 @@ public class JobConfiguration {
         return stepBuilderFactory.get("step3")
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println("step 3 executed");
+                    return RepeatStatus.FINISHED;
+                })
+                .build();
+    }
+
+    @Bean
+    public Step step4() {
+        return stepBuilderFactory.get("step4")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("step 4 executed");
+                    return RepeatStatus.FINISHED;
+                })
+                .build();
+    }
+
+    @Bean
+    public Step step5() {
+        return stepBuilderFactory.get("step5")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("step 5 executed");
+                    return RepeatStatus.FINISHED;
+                })
+                .build();
+    }
+
+    @Bean
+    public Step step6() {
+        return stepBuilderFactory.get("step6")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("step 6 executed");
                     return RepeatStatus.FINISHED;
                 })
                 .build();
