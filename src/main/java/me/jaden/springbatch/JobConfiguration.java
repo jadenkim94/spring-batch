@@ -25,16 +25,9 @@ public class JobConfiguration {
                 .start(step1())
                     .on(ExitStatus.FAILED.getExitCode())
                     .to(step2())
-                    .on(ExitStatus.FAILED.getExitCode())
-                    .stop()
-                .from(step1())
-                    .on(ANY_STATUS)
-                    .to(step3())
-                    .next(step4())
-                .from(step2())
-                    .on(ANY_STATUS)
-                    .to(step2())
-                    .end()
+                        .on("PASS")
+                        .stop()
+                .end()
                 .build();
     }
 
@@ -43,6 +36,7 @@ public class JobConfiguration {
         return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println("step 1 has executed");
+                    contribution.getStepExecution().setExitStatus(ExitStatus.FAILED);
                     return RepeatStatus.FINISHED;
                 }).build();
     }
@@ -53,33 +47,17 @@ public class JobConfiguration {
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println("step 2 has executed");
                     return RepeatStatus.FINISHED;
-                }).build();
+                })
+                .listener(new PassCheckingLister())
+                .build();
     }
 
-    @Bean
-    public Step step3() {
-        return stepBuilderFactory.get("step3")
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println(contribution.getStepExecution().getStepName() + " has executed");
-                    return RepeatStatus.FINISHED;
-                }).build();
-    }
-
-    @Bean
-    public Step step4() {
-        return stepBuilderFactory.get("step4")
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println(contribution.getStepExecution().getStepName() + " has executed");
-                    return RepeatStatus.FINISHED;
-                }).build();
-    }
-
-    @Bean
-    public Step step5() {
-        return stepBuilderFactory.get("step4")
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println(contribution.getStepExecution().getStepName() + " has executed");
-                    return RepeatStatus.FINISHED;
-                }).build();
-    }
+//    @Bean
+//    public Step step3() {
+//        return stepBuilderFactory.get("step3")
+//                .tasklet((contribution, chunkContext) -> {
+//                    System.out.println(contribution.getStepExecution().getStepName() + " has executed");
+//                    return RepeatStatus.FINISHED;
+//                }).build();
+//    }
 }
