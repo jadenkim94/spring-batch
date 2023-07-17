@@ -4,10 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,21 +30,23 @@ public class JobConfiguration {
     public Job batchJob() {
         return jobBuilderFactory.get("job")
                 .incrementer(new RunIdIncrementer())
-                .start(step1())
-                .next(decider())
-                .from(decider()).on("ODD").to(oddStep())
-                .from(decider()).on("EVEN").to(eventStep())
+                .start(flowStep())
+                .next(step2())
                 .end()
                 .build();
     }
+
     @Bean
-    public JobExecutionDecider decider() {
-        return new CustomDecider();
+    public Flow flowStep() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow1");
+        flowBuilder.start(step1())
+                .end();
+        return flowBuilder.build();
     }
 
     @Bean
     public Step step1() {
-        return stepBuilderFactory.get("startStep")
+        return stepBuilderFactory.get("step1")
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println(contribution.getStepExecution().getStepName() + " has executed");
                     return RepeatStatus.FINISHED;
@@ -47,18 +54,8 @@ public class JobConfiguration {
     }
 
     @Bean
-    public Step oddStep() {
-        return stepBuilderFactory.get("oddStep")
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println(contribution.getStepExecution().getStepName() + " has executed");
-                    return RepeatStatus.FINISHED;
-                })
-                .build();
-    }
-
-    @Bean
-    public Step eventStep() {
-        return stepBuilderFactory.get("eventStep")
+    public Step step2() {
+        return stepBuilderFactory.get("step3")
                 .tasklet((contribution, chunkContext) -> {
                     System.out.println(contribution.getStepExecution().getStepName() + " has executed");
                     return RepeatStatus.FINISHED;
