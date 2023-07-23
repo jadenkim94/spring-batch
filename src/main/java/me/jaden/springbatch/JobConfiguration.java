@@ -7,15 +7,13 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.file.transform.Range;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -45,17 +43,20 @@ public class JobConfiguration {
                 })
                 .build();
     }
+
     @Bean
     public ItemReader itemReader() {
         return new FlatFileItemReaderBuilder<Customer>()
                 .name("flatFile")
-                .resource(new ClassPathResource("/customer.csv"))
+                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer.txt"))
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
                 .targetType(Customer.class)
                 .linesToSkip(1)
-                .delimited()
-                .delimiter(",")
-                .names("name", "age", "year")
+                .fixedLength()
+                .addColumns(new Range(1))
+                .addColumns(new Range(6))
+                .addColumns(new Range(10))
+                .names("name", "year", "age")
                 .build();
 
     }
