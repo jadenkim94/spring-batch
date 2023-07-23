@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Customer {
 
+    private long id;
     private String name;
     private int age;
-    private String year;
 
-    public Customer(String name, int age, String year) {
+    public Customer(long id, String name, int age) {
+        this.id = id;
         this.name = name;
         this.age = age;
-        this.year = year;
     }
 }
