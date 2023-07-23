@@ -1,19 +1,17 @@
 package me.jaden.springbatch;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Customer {
 
-    private long id;
-    private String name;
-    private int age;
+    private int id;
+    private String firstName;
+    private String lastName;
+    private String birthDate;
 
-    public Customer(long id, String name, int age) {
-        this.id = id;
-        this.name = name;
-        this.age = age;
-    }
 }

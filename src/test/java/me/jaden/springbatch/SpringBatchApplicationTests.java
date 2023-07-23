@@ -8,8 +8,11 @@ class SpringBatchApplicationTests {
 
     @Test
     void contextLoads() {
-        Client client = new Client();
-        client.print();
+        for(int i = 2; i <= 100; i ++ ) {
+            String sql = "insert into customer (id, firstname, lastname, birthdate) values (" + i + ", 'Reed', 'Edward', '2021-01-20 13:12:00');";
+            System.out.println(sql);
+        }
+
     }
 
 }
