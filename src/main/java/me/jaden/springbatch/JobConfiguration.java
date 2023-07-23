@@ -7,6 +7,9 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.json.JacksonJsonObjectReader;
+import org.springframework.batch.item.json.JsonItemReader;
+import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.batch.item.xml.builder.StaxEventItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +31,7 @@ public class JobConfiguration {
 
     @Bean
     public Job job() {
-        return jobBuilderFactory.get("job")
+        return jobBuilderFactory.get("job2")
                 .start(step1())
                 .build();
     }
@@ -51,11 +54,10 @@ public class JobConfiguration {
 
     @Bean
     public ItemReader customItemReader() {
-        return new StaxEventItemReaderBuilder<Customer>()
-                .name("staxReader")
-                .resource(new ClassPathResource("customer.xml"))
-                .addFragmentRootElements("customer")
-                .unmarshaller(itemUnmarshaller())
+        return new JsonItemReaderBuilder<Customer>()
+                .name("jsonItemReader")
+                .resource(new ClassPathResource("customer.json"))
+                .jsonObjectReader(new JacksonJsonObjectReader<>(Customer.class))
                 .build();
     }
 
