@@ -7,11 +7,16 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaCursorItemReader;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RequiredArgsConstructor
@@ -20,11 +25,10 @@ public class JobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
-    private final DataSource dataSource;
-
+    private final EntityManagerFactory entityManagerFactory;
     @Bean
     public Job job() {
-        return jobBuilderFactory.get("job4")
+        return jobBuilderFactory.get("job5")
                 .start(step1())
                 .build();
     }
@@ -39,13 +43,15 @@ public class JobConfiguration {
 
     @Bean
     public ItemReader customItemReader() {
-        return new JdbcCursorItemReaderBuilder<Customer>()
-                .name("jdbcCursorItemReader")
-                .fetchSize(10)
-                .sql("select id, firstName, lastName, birthdate from customer where firstname like ? order by id")
-                .beanRowMapper(Customer.class)
-                .queryArguments("R%")
-                .dataSource(dataSource)
+
+        Map params = new HashMap();
+        params.put("firstname", "R%");
+
+        return new JpaCursorItemReaderBuilder<Customer>()
+                .name("jpaCursorItemReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("select c from Customer c where firstname like :firstname")
+                .parameterValues(params)
                 .build();
     }
 
