@@ -9,6 +9,9 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.JsonObjectMarshaller;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.item.xml.builder.StaxEventItemWriterBuilder;
 import org.springframework.context.annotation.Bean;
@@ -59,24 +62,13 @@ public class JobConfiguration {
     }
 
     private ItemWriter<Customer> customItemWriter() {
-        return new StaxEventItemWriterBuilder<Customer>()
-                .name("staxEventItemWriter")
-                .marshaller(itemMarshaller())
-                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer2.xml"))
-                .rootTagName("customers")
+        return new JsonFileItemWriterBuilder<Customer>()
+                .name("jsonFileItemWriter")
+                .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
+                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer2.json"))
                 .build();
     }
 
-    private Marshaller itemMarshaller() {
-        Map<String, Class<?>> aliases = new HashMap<>();
 
-        aliases.put("customer", Customer.class);
-        aliases.put("id", Integer.class);
-        aliases.put("username", String.class);
-        aliases.put("age", Integer.class);
 
-        XStreamMarshaller xStreamMarshaller = new XStreamMarshaller();
-        xStreamMarshaller.setAliases(aliases);
-        return xStreamMarshaller;
-    }
 }
