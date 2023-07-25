@@ -7,11 +7,15 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 import javax.persistence.EntityManagerFactory;
+import java.util.List;
 
 
 @RequiredArgsConstructor
@@ -24,7 +28,7 @@ public class JobConfiguration {
 
     @Bean
     public Job job() {
-        return jobBuilderFactory.get("job2")
+        return jobBuilderFactory.get("job6")
                 .start(step1())
                 .build();
     }
@@ -39,23 +43,22 @@ public class JobConfiguration {
 
     @Bean
     public ItemReader customItemReader() {
-        return new JpaPagingItemReaderBuilder<Customer>()
-                .name("jpaPagingItemReader")
-                .entityManagerFactory(entityManagerFactory)
-                .pageSize(10)
-                .queryString("select c from Customer c join fetch c.address where c.id <= 10 order by c.id")
-                .build();
+        return new ListItemReader(List.of(new Customer(1, "user1", 20),
+                new Customer(2, "user2", 30),
+                new Customer(3, "user3", 31),
+                new Customer(4, "user4", 23),
+                new Customer(5, "user5", 28),
+                new Customer(6, "user6", 36)));
     }
 
     private ItemWriter<Customer> customItemWriter() {
-        return items -> {
-            System.out.println("====");
-            for (Customer custoemr : items) {
-                System.out.println(custoemr.getId());
-                System.out.println(custoemr.getAddress().getLocation());
-            }
-        };
+        return new FlatFileItemWriterBuilder<Customer>()
+                .name("flatFileItemWriter")
+                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer.txt"))
+                .delimited()
+                .delimiter("|")
+                .names("id", "username", "age")
+                .append(true)
+                .build();
     }
-
-
 }
