@@ -10,13 +10,18 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.xml.builder.StaxEventItemWriterBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.oxm.Marshaller;
+import org.springframework.oxm.xstream.XStreamMarshaller;
 
 import javax.persistence.EntityManagerFactory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @RequiredArgsConstructor
@@ -54,13 +59,24 @@ public class JobConfiguration {
     }
 
     private ItemWriter<Customer> customItemWriter() {
-        return new FlatFileItemWriterBuilder<Customer>()
-                .name("flatFileItemWriter")
-                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer.txt"))
-                .formatted()
-                .format("%-2d%-6s%-2d")
-                .names("id", "username", "age")
-                .append(true)
+        return new StaxEventItemWriterBuilder<Customer>()
+                .name("staxEventItemWriter")
+                .marshaller(itemMarshaller())
+                .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer2.xml"))
+                .rootTagName("customers")
                 .build();
+    }
+
+    private Marshaller itemMarshaller() {
+        Map<String, Class<?>> aliases = new HashMap<>();
+
+        aliases.put("customer", Customer.class);
+        aliases.put("id", Integer.class);
+        aliases.put("username", String.class);
+        aliases.put("age", Integer.class);
+
+        XStreamMarshaller xStreamMarshaller = new XStreamMarshaller();
+        xStreamMarshaller.setAliases(aliases);
+        return xStreamMarshaller;
     }
 }
