@@ -5,6 +5,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
@@ -29,6 +30,7 @@ public class JobConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job6")
+                .incrementer(new RunIdIncrementer())
                 .start(step1())
                 .build();
     }
@@ -44,7 +46,7 @@ public class JobConfiguration {
     @Bean
     public ItemReader customItemReader() {
         return new ListItemReader(List.of(new Customer(1, "user1", 20),
-                new Customer(2, "user2", 30),
+                new Customer(2, "user8", 30),
                 new Customer(3, "user3", 31),
                 new Customer(4, "user4", 23),
                 new Customer(5, "user5", 28),
@@ -55,8 +57,8 @@ public class JobConfiguration {
         return new FlatFileItemWriterBuilder<Customer>()
                 .name("flatFileItemWriter")
                 .resource(new FileSystemResource("/Users/jaden/Desktop/study/spring-batch/src/main/resources/customer.txt"))
-                .delimited()
-                .delimiter("|")
+                .formatted()
+                .format("%-2d%-6s%-2d")
                 .names("id", "username", "age")
                 .append(true)
                 .build();
