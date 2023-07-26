@@ -10,8 +10,10 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.adapter.ItemWriterAdapter;
+import org.springframework.batch.item.support.ClassifierCompositeItemProcessor;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.support.builder.ClassifierCompositeItemProcessorBuilder;
 import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,8 +48,8 @@ public class JobConfiguration {
     }
 
     private ItemProcessor customItemProcessor() {
-        return new CompositeItemProcessorBuilder<Customer, Customer>()
-                .delegates(new CustomItemProcessor(), new CustomItemProcessor2())
+        return new ClassifierCompositeItemProcessorBuilder<Customer, Customer>()
+                .classifier(new CustomClassifier<>())
                 .build();
     }
 
