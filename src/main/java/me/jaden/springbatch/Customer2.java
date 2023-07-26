@@ -12,7 +12,7 @@ import javax.persistence.Id;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Customer {
+public class Customer2 {
 
     @Id
     @GeneratedValue
@@ -20,7 +20,8 @@ public class Customer {
     private String username;
     private int age;
 
-    public Customer2 convertToCustomer2() {
-        return new Customer2(id, username, age);
+    public static Customer2 createCustomer2(Customer customer) {
+        return new Customer2(customer.getId(), customer.getUsername(), customer.getAge());
     }
+
 }
