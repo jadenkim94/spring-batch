@@ -10,8 +10,9 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.adapter.ItemWriterAdapter;
-import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
+import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,9 +40,17 @@ public class JobConfiguration {
         return stepBuilderFactory.get("chunk")
                 .<Customer, Customer>chunk(5)
                 .reader(customItemReader())
+                .processor(customItemProcessor())
                 .writer(customItemWriter())
                 .build();
     }
+
+    private ItemProcessor customItemProcessor() {
+        return new CompositeItemProcessorBuilder<Customer, Customer>()
+                .delegates(new CustomItemProcessor(), new CustomItemProcessor2())
+                .build();
+    }
+
     @Bean
     public ItemReader customItemReader() {
         return new ListItemReader(List.of(new Customer(1, "user1", 20),
