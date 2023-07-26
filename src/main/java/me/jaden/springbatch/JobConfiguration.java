@@ -9,6 +9,7 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.adapter.ItemWriterAdapter;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
@@ -38,15 +39,9 @@ public class JobConfiguration {
         return stepBuilderFactory.get("chunk")
                 .<Customer, Customer>chunk(5)
                 .reader(customItemReader())
-                .processor(customItemProcessor())
                 .writer(customItemWriter())
                 .build();
     }
-
-    private ItemProcessor<Customer, Customer2> customItemProcessor() {
-        return item -> item.convertToCustomer2();
-    }
-
     @Bean
     public ItemReader customItemReader() {
         return new ListItemReader(List.of(new Customer(1, "user1", 20),
@@ -57,10 +52,10 @@ public class JobConfiguration {
                 new Customer(6, "user6", 36)));
     }
 
-    private ItemWriter<Customer2> customItemWriter() {
-        return new JpaItemWriterBuilder<Customer2>()
-                .usePersist(false)
-                .entityManagerFactory(entityManagerFactory)
-                .build();
+    private ItemWriter<Customer> customItemWriter() {
+        ItemWriterAdapter<Customer> writer = new ItemWriterAdapter<>();
+        writer.setTargetObject(new CustomService<Customer>());
+        writer.setTargetMethod("customWrite");
+        return writer;
     }
 }
