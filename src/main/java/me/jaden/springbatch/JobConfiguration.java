@@ -6,18 +6,19 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.step.item.SkipOverflowException;
+import org.springframework.batch.core.step.skip.LimitCheckingItemSkipPolicy;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
-import org.springframework.batch.repeat.RepeatCallback;
-import org.springframework.batch.repeat.RepeatContext;
-import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.batch.repeat.exception.SimpleLimitExceptionHandler;
-import org.springframework.batch.repeat.support.RepeatTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RequiredArgsConstructor
@@ -44,32 +45,23 @@ public class JobConfiguration {
                     @Override
                     public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
                         i++;
-                        return i > 5 ? null : "item" + i;
+                        if (i == 3) {
+                            throw new SkippableException("skip");
+                        }
+                        System.out.println("ItemReader: " + i);
+                        return i > 20 ? null : String.valueOf(i);
                     }
-                })
-                .processor(new ItemProcessor<String, String>() {
-                    RepeatTemplate repeatTemplate = new RepeatTemplate();
-                    @Override
-                    public String process(String item) throws Exception {
-//                        CompositeCompletionPolicy compositeCompletionPolicy = new CompositeCompletionPolicy();
-//                        CompletionPolicy[] completionPolicies = {
-//                                new TimeoutTerminationPolicy(3000)};
-//                        compositeCompletionPolicy.setPolicies(completionPolicies);
-//                        repeatTemplate.setCompletionPolicy(compositeCompletionPolicy);
-                        repeatTemplate.setExceptionHandler(simpleLimitExceptionHandler());
-                        repeatTemplate.iterate(new RepeatCallback() {
-                            @Override
-                            public RepeatStatus doInIteration(RepeatContext context) throws Exception {
-                                System.out.println("repeatTemplateTest is testing");
-                                throw new RuntimeException("Exception is occurred");
-//                                return RepeatStatus.CONTINUABLE;
-                            }
-                        });
-                        return item;
-                    }
-                })
-                .writer(items -> System.out.println(items))
+                }).processor(new SkipItemProcessor())
+                .writer(new SkipItemWriter())
+                .faultTolerant()
+                .skipPolicy(new LimitCheckingItemSkipPolicy(10, exceptionMap()))
                 .build();
+    }
+
+    private Map<Class<? extends Throwable>, Boolean> exceptionMap() {
+        Map<Class<? extends Throwable>, Boolean> map = new HashMap<>();
+        map.put(SkippableException.class, true);
+        return map;
     }
 
     @Bean
