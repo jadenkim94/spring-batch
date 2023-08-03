@@ -9,3 +9,7 @@ spring:
       enabled: true
     jdbc:
       initialize-schema: always
+
+  output:
+    ansi:
+      enabled: always

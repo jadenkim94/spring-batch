@@ -8,16 +8,16 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.item.SkipOverflowException;
 import org.springframework.batch.core.step.skip.LimitCheckingItemSkipPolicy;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
+import org.springframework.batch.item.*;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.exception.SimpleLimitExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.support.RetryTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -40,22 +40,23 @@ public class JobConfiguration {
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .<String, String>chunk(5)
-                .reader(new ItemReader<>() {
-                    int i = 0;
-                    @Override
-                    public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-                        i++;
-                        if (i == 3) {
-                            throw new SkippableException("skip");
-                        }
-                        System.out.println("ItemReader: " + i);
-                        return i > 20 ? null : String.valueOf(i);
-                    }
-                }).processor(new SkipItemProcessor())
-                .writer(new SkipItemWriter())
+                .reader(new ListItemReader<>(getItemList()))
+                .processor(new RetryItemProcessor())
+                .writer(items -> System.out.println(items))
                 .faultTolerant()
-                .skipPolicy(new LimitCheckingItemSkipPolicy(10, exceptionMap()))
+                .retry(RetryableException.class)
+                .skip(RetryableException.class)
+                .skipLimit(2)
+                .retryLimit(2)
                 .build();
+    }
+
+    private List<String> getItemList() {
+        List<String> items = new ArrayList<>();
+        for(int i = 0; i < 30; i++) {
+            items.add(String.valueOf(i));
+        }
+        return items;
     }
 
     private Map<Class<? extends Throwable>, Boolean> exceptionMap() {
